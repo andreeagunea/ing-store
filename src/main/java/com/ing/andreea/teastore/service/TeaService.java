@@ -1,8 +1,10 @@
 package com.ing.andreea.teastore.service;
 
+import com.ing.andreea.teastore.dto.PriceUpdate;
 import com.ing.andreea.teastore.dto.Tea;
 import com.ing.andreea.teastore.dto.TeaRequest;
 import com.ing.andreea.teastore.exception.DuplicateTeaException;
+import com.ing.andreea.teastore.exception.TeaNotFoundException;
 import com.ing.andreea.teastore.model.entity.TeaEntity;
 import com.ing.andreea.teastore.model.enums.TeaCategory;
 import com.ing.andreea.teastore.repository.TeaRepository;
@@ -44,11 +46,6 @@ public class TeaService {
         return teaRepository.findByPriceBetween(min, max).stream().map(Tea::fromEntity).toList();
     }
 
-    public List<Tea> getTeasInStock(int quantity) {
-        logger.info("Retrieve teas in stock with a quantity bigger than {}", quantity);
-        return teaRepository.findByStockQuantityGreaterThan(quantity).stream().map(Tea::fromEntity).toList();
-    }
-
     public Tea addTea(TeaRequest request) {
         logger.info("Adding new tea: {}", request.getName());
 
@@ -69,5 +66,18 @@ public class TeaService {
         logger.info("Tea saved successfully with id: {}", savedTea.getId());
 
         return Tea.fromEntity(savedTea);
+    }
+
+    public Tea updatePrice(Long id, PriceUpdate request) {
+        logger.info("Updating price for tea id: {}", id);
+
+        TeaEntity tea = teaRepository.findById(id)
+                .orElseThrow(() -> new TeaNotFoundException("Tea not found with id: " + id));
+
+        tea.setPrice(request.getNewPrice());
+        TeaEntity updatedTea = teaRepository.save(tea);
+
+        logger.info("Price updated successfully for tea: {}", updatedTea.getName());
+        return Tea.fromEntity(updatedTea);
     }
 }

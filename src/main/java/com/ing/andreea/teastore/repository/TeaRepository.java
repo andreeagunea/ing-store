@@ -20,7 +20,5 @@ public interface TeaRepository extends JpaRepository<TeaEntity, Long> {
 
     List<TeaEntity> findByPriceBetween(BigDecimal minPrice, BigDecimal maxPrice);
 
-    List<TeaEntity> findByStockQuantityGreaterThan(int quantity);
-
     boolean existsByNameIgnoreCase(String name);
 }
