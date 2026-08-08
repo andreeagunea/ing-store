@@ -54,15 +54,14 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
-        authenticationManager.authenticate(
+        var authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getUsername(),
                         request.getPassword()
                 )
         );
 
-        UserEntity user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow();
+        UserEntity user = (UserEntity) authentication.getPrincipal();
 
         String token = jwtService.generateToken(user);
         return new AuthResponse(token);

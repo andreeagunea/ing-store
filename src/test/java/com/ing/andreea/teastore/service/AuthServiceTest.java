@@ -15,9 +15,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -37,6 +36,9 @@ class AuthServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private Authentication authentication;
 
     @InjectMocks
     private AuthService authService;
@@ -94,8 +96,8 @@ class AuthServiceTest {
     @Test
     void loginSuccessfully() {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenReturn(null);
-        when(userRepository.findByUsername("andreea")).thenReturn(Optional.of(userEntity));
+                .thenReturn(authentication);
+        when(authentication.getPrincipal()).thenReturn(userEntity);
         when(jwtService.generateToken(userEntity)).thenReturn("mocked-jwt-token");
 
         AuthResponse result = authService.login(loginRequest);
@@ -103,7 +105,7 @@ class AuthServiceTest {
         assertNotNull(result);
         assertEquals("mocked-jwt-token", result.getToken());
         verify(authenticationManager, times(1)).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(userRepository, times(1)).findByUsername("andreea");
+        verify(authentication, times(1)).getPrincipal();
         verify(jwtService, times(1)).generateToken(userEntity);
     }
 
@@ -114,7 +116,7 @@ class AuthServiceTest {
 
         assertThrows(BadCredentialsException.class, () -> authService.login(loginRequest));
         verify(authenticationManager, times(1)).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(userRepository, never()).findByUsername(any());
+        verify(authentication, never()).getPrincipal();
         verify(jwtService, never()).generateToken(any());
     }
 
@@ -122,10 +124,9 @@ class AuthServiceTest {
     void throwExceptionWhenUserNotFound() {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(null);
-        when(userRepository.findByUsername("andreea")).thenReturn(Optional.empty());
 
         assertThrows(RuntimeException.class, () -> authService.login(loginRequest));
-        verify(userRepository, times(1)).findByUsername("andreea");
+        verify(authentication, never()).getPrincipal();
         verify(jwtService, never()).generateToken(any());
     }
 }
