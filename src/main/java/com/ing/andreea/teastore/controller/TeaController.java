@@ -5,10 +5,12 @@ import com.ing.andreea.teastore.dto.Tea;
 import com.ing.andreea.teastore.dto.TeaRequest;
 import com.ing.andreea.teastore.model.enums.TeaCategory;
 import com.ing.andreea.teastore.service.TeaService;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -27,24 +29,28 @@ public class TeaController {
     }
 
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<Tea>> getAllTeas() {
         logger.info("Retrieving all teas");
         return ResponseEntity.ok(teaService.getAllTeas());
     }
 
     @GetMapping("/search")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<Tea>> getTeasByName(@RequestParam String name) {
         logger.info("Retrieving teas by name");
         return ResponseEntity.ok(teaService.getTeasByName(name));
     }
 
     @GetMapping("/search/category")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<Tea>> getTeasByCategory(@RequestParam TeaCategory category) {
         logger.info("Retrieving teas by category");
         return ResponseEntity.ok(teaService.getTeasByCategory(category));
     }
 
     @GetMapping("/search/price")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<Tea>> getTeasByPriceRange(
             @RequestParam BigDecimal min,
             @RequestParam BigDecimal max
@@ -54,15 +60,17 @@ public class TeaController {
     }
 
     @PostMapping
-    public ResponseEntity<Tea> addTea(@RequestBody TeaRequest tea) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Tea> addTea(@Valid @RequestBody TeaRequest tea) {
         logger.info("Adding tea");
         return ResponseEntity.status(HttpStatus.CREATED).body(teaService.addTea(tea));
     }
 
     @PutMapping("/price/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Tea> updatePrice(
             @PathVariable Long id,
-            @RequestBody PriceUpdate request) {
+            @Valid @RequestBody PriceUpdate request) {
         logger.info("Update price for tea with id {}", id);
         return ResponseEntity.ok(teaService.updatePrice(id, request));
     }
